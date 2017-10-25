@@ -16,9 +16,13 @@
 #include "MemoryFunctions.h"	// interface for drawing the screen and delay function
 #include "DynArray.h"			// needed for DynArrays. 
 #include <random>				// NEEDED FOR RANDONIMITY
+#include <crtdbg.h>				// Needed for memory leak detection
 
 
 using namespace std;
+////Also need this for memory leak code stuff
+//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//_CrtSetBreakAlloc(-1); //Important!
 
 struct Player
 {
@@ -45,8 +49,8 @@ public:
 };
 
 void Simon();
+void EndScreen(DynArray<char> * thing);
 void DisplayHighScores(DynArray<Player> thing);
-void Check(char ch, DynArray<char> * chars, unsigned int &increment, bool &memorized);
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // Function :	main
 // Parameters : argc - the number of command line arguments
@@ -79,8 +83,8 @@ int main(int argc, char ** argv)
 				switch (tolower(ch))
 				{
 				case '1':
+					delay(300);
 					Simon();
-					system("cls");
 					restart = true;
 					break;
 				case '2':
@@ -103,21 +107,13 @@ int main(int argc, char ** argv)
 	delete players;
 	return 0;
 }
-void Check(char ch, DynArray<char> * chars, unsigned int &increment, bool &memorized)
-{
-	delay(150);
-	if (tolower(ch) != (*chars)[increment])
-		memorized = false;
-	else
-		increment++;
-	empty();
-}
-void Simon(DynArray<char> * thing)
+void Simon()
 {
 	DynArray<char> * chars = new DynArray<char>();
-	unsigned srand();
+	//unsigned srand();
 	unsigned int increment = 0;
 	bool memorized = true;
+	bool userGotAllChars = true;
 	while (memorized)
 	{
 		int temp = rand() % 4;
@@ -168,8 +164,10 @@ void Simon(DynArray<char> * thing)
 			}
 		}
 		empty();
+
 		increment = 0;
-		while (memorized)
+		userGotAllChars = false;
+		while (memorized && !userGotAllChars)
 		{
 			if (_kbhit())
 			{
@@ -180,45 +178,89 @@ void Simon(DynArray<char> * thing)
 				case 'w':
 				{
 					drawUp();
-					Check(ch, chars, increment, memorized);
+					delay(150);
+					if (tolower(ch) != (*chars)[increment])
+						memorized = false;
+					else
+						increment++;
+					empty();
 				}
 				break;
 
 				case 's':
 				{
 					drawDown();
-					Check(ch, chars, increment, memorized);
+					delay(150);
+					if (tolower(ch) != (*chars)[increment])
+						memorized = false;
+					else
+						increment++;
+					empty();
 				}
 				break;
 
 				case 'a':
 				{
 					drawLeft();
-					Check(ch, chars, increment, memorized);
+					delay(150);
+					if (tolower(ch) != (*chars)[increment])
+						memorized = false;
+					else
+						increment++;
+					empty();
 				}
 				break;
 
 				case 'd':
 				{
-					drawRight(); 
-					Check(ch, chars, increment, memorized);
+					drawRight();
+					delay(150);
+					if (tolower(ch) != (*chars)[increment])
+						memorized = false;
+					else
+						increment++;
+					empty();
 				}
 				break;
 				}
 
 				// exit on the 'q' key
 				if (ch == 'q')
+				{
+					memorized = false;
 					break;
+				}
+				if (increment == chars->size())
+					userGotAllChars = true;
 			}
 		}
 	}
-
+	system("cls");
+	EndScreen(chars);
 	delete chars;
+}
+
+void EndScreen(DynArray<char> * thing)
+{
+	int temp = thing->size();
+	cout << "You got " << temp << " correct!\n";
+
+	if (temp < 5)
+		cout << "Better luck next time!\n";
+	else if (temp >= 5 && temp < 15)
+		cout << "That's great! Keep up the good work!\n";
+	else if (temp >= 15 && temp < 10000)
+		cout << "You're amazing! Clearly, the practice has paid off. \n";
+	else
+		cout << "Mnemosyne, as always, it's an honor to have you play my game.\n";
+
+	delay(2000);
+	system("cls");
 }
 
 void DisplayHighScores(DynArray<Player> thing)
 {
-	for (int i = 0; i < thing.size(); i++)
+	for (unsigned int i = 0; i < thing.size(); i++)
 	{
 		cout << thing[i].GetName() << "\t" << thing[i].GetScore() << "\n";
 	}
